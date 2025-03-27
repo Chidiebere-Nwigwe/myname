@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment{
+        NETLIFY_SITE_ID = 'a56117ea-8984-47d3-bece-390688910c3b'
+        NETLIFY_AUTH_TOKEN = credentials('chidiebere-token')
+    }
+
     stages {
 
         stage('Build') {
@@ -37,5 +42,22 @@ pipeline {
             }
         }
 
+        stage('Deploy') {
+            agent {
+                docker { 
+                    image 'node:22.13.1-alpine' 
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                    npm install netlify-cli
+                    node_modules/.bin/netlify --version
+                    echo "Deploying to Site ID: $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --prod --dir=build
+                '''
+            }
+        }
     }
 }
